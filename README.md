@@ -1,5 +1,5 @@
 # Github Profile View Booster
- Github profile counter booster built using python and the requests module.
+ Github profile counter booster built using python and the http requests.
 
 ## Preview
 ![image](https://i.hizliresim.com/jq920k2.png)
