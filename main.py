@@ -59,7 +59,10 @@ def run():
                 r = httpx.get(url=url, headers=headers, proxies=proxy_dict)
             except httpx.ProxyError:
                 safe_print(f"{Fore.LIGHTRED_EX}[-] Bad proxy: {proxy}")
-
+            except ValueError:
+                safe_print(f"{Fore.LIGHTRED_EX}[-] Please change the 'counter_url' with a valid camo url in 'config.json'")
+                print('')
+                break
             if r.status_code == 200:
                 global count
                 count += 1
