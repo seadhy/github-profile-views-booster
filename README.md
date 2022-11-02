@@ -1,5 +1,5 @@
 # Github Profile View Booster
- Github profile counter booster built using python and the http requests.
+ Github profile counter booster built using python and the httpx requests.
 
 ## Preview
 ![image](https://i.hizliresim.com/jq920k2.png)
@@ -11,9 +11,11 @@
 ## Usage
 1. Run `install.bat`
 
-2. Add proxy in `proxies.txt` file in ip:port or username:password@hostname:port format
+2. Edit the `config.json` file
 
-3. Run `run.bat`
+3. (Optional) Add proxy in `proxies.txt` file in ip:port or username:password@hostname:port format 
+
+4. Run `run.bat`
 
 ## Get View Counter Link
 Click this button in your profile and copy the link you went to. This is your counter link.
