@@ -1,28 +1,39 @@
-import requests,threading,sys
-from random import choice
-from colorama import Fore
-from os import system
+import os; from time import sleep
+try:
+    import httpx,json,threading
+    from random import choice
+    from colorama import Fore
+    from os import system
+    from fake_useragent import FakeUserAgent
+except ModuleNotFoundError:
+    print('[>] Modules not found! Installing, please wait...')
+    os.system('pip install -r requirements.txt')
+    os.system('cls')
+    print('[>] Download successfuly complated! The booster will start in 3 seconds.')
+    import httpx, json, threading; from random import choice; from colorama import Fore; from os import system; from fake_useragent import FakeUserAgent
+    sleep(3)
+
+faker = FakeUserAgent()
+config_file = json.load(open('config.json','r',encoding='utf-8'))
+lock = threading.Lock()
+
+# * Define Functions *#
+
 def clear():
     system('cls')
 
-clear()
+def safe_print(*args):
+    lock.acquire()
+    for arg in args: print(arg, end=' ')
+    lock.release()
 
-
-count = 0
-
-print(f"{Fore.LIGHTYELLOW_EX}[?] Github View Counter Link: ") #Example View Counter Link: https://camo.githubusercontent.com/4d29071feb1358f324bd018ad789e974f4c5963e91aa6bbc57dec9bb118a67c9/68747470733a2f2f6b6f6d617265762e636f6d2f67687076632f3f757365726e616d653d736561646879
-counter_url = input('> ')
-print(f"{Fore.LIGHTYELLOW_EX}\n[?] Number of Threads: ")
-threads_number = int(input('> '))
-print(f"{Fore.LIGHTYELLOW_EX}\n[?] Use a Proxy: (y/n) ")
-proxy_use = input('> ')
 def run():
     while True:
         headers = {
-            "authority": "camo.githubusercontent.com",
-            "method": "GET",
             "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
             "accept-encoding": "gzip, deflate, br",
+            "accept-language": "en-US,en;q=0.7",
+            "cache-control": "max-age=0",
             "dnt": "1",
             "sec-fetch-dest": "document",
             "sec-fetch-mode": "navigate",
@@ -30,54 +41,61 @@ def run():
             "sec-fetch-user": "?1",
             "sec-gpc": "1",
             "upgrade-insecure-requests": "1",
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36"
+            "user-agent": faker.random
         }
-        if proxy_use == 'y':
+        
+        if use_proxy == 'y' or use_proxy == 'yes':
             proxies = open('proxies.txt','r',encoding='utf-8').read().splitlines()
             proxy = choice(proxies)
 
             proxy_dict = {
                 "http": f"http://{proxy}",
-                "https": f"https://{proxy}"
+                "https": f"http://{proxy}"
             }
 
             try:
                 url = counter_url
                 global r
-                r = requests.get(url=url,headers=headers,proxies=proxy_dict)
-            except requests.exceptions.ProxyError:
-                print(f"{Fore.LIGHTRED_EX}[-] Bad Proxy: {proxy}")
-            except requests.exceptions.MissingSchema:
-                print(f"{Fore.LIGHTRED_EX}[-] Invalid link! Please make sure you enter the correct link.")
-                input('')
-                exit()
+                r = httpx.get(url=url, headers=headers, proxies=proxy_dict)
+            except httpx.ProxyError:
+                safe_print(f"{Fore.LIGHTRED_EX}[-] Bad proxy: {proxy}")
+
             if r.status_code == 200:
                 global count
                 count += 1
 
-                print(f"{Fore.LIGHTGREEN_EX}[+] Successful Request! Total Successful Requests Sent: {count}")
+                safe_print(f"{Fore.LIGHTGREEN_EX}[+] Successful request! Total successful requests sent: {count}")
             else:
-                print(f"{Fore.LIGHTRED_EX}[-] Error Requests.")
-        elif proxy_use == 'n':
+                safe_print(f"{Fore.LIGHTRED_EX}[-] Error request.")
+        elif use_proxy == 'n' or use_proxy == 'no':
             try:
                 url = counter_url
                 global req
-                req = requests.get(url=url,headers=headers)
-            except requests.exceptions.ProxyError:
-                print(f"{Fore.LIGHTRED_EX}[-] Bad Proxy: {proxy}")
-            except requests.exceptions.MissingSchema:
-                print(f"{Fore.LIGHTRED_EX}[-] Invalid link! Please make sure you enter the correct link.")
-                input('')
-                exit()
+                req = httpx.get(url=url,headers=headers)
+            except httpx.ProxyError:
+                safe_print(f"{Fore.LIGHTRED_EX}[-] Bad Proxy: {proxy}")
             if req.status_code == 200:
                 count += 1
 
-                print(f"{Fore.LIGHTGREEN_EX}[+] Successful Request! Total Successful Requests Sent: {count}")
+                safe_print(f"{Fore.LIGHTGREEN_EX}[+] Successful request! Total successful requests sent: {count}")
+                print()
+            elif 'Bad Signature' in req.text:
+                safe_print(f"{Fore.LIGHTRED_EX}[-] Invalid Camo Link! Please change valid link. Example Camo Link: https://camo.githubusercontent.com/4d29071feb1358f324bd018ad789e974f4c5963e91aa6bbc57dec9bb118a67c9/68747470733a2f2f6b6f6d617265762e636f6d2f67687076632f3f757365726e616d653d736561646879")
+                break
             else:
-                print(f"{Fore.LIGHTRED_EX}[-] Error Requests.")
+                safe_print(req.text)
+                safe_print(f"{Fore.LIGHTRED_EX}[-] Error request.")
 
+# * Run Booster * #
 
-for i in range(1,threads_number+1):
-    print(f"{i} | Thread started.")
-    t = threading.Thread(target=run)
-    t.start()
+clear()
+count = 0
+
+if __name__ == "__main__":
+    counter_url = config_file['counter_url']
+    threads = config_file['threads']
+    use_proxy = config_file['use_proxy']
+    
+    for i in range(1, threads+1):
+        print(f"{i} | Thread started.")
+        t = threading.Thread(target=run).start()
